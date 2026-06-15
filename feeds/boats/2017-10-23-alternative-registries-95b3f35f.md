@@ -1,0 +1,12 @@
+---
+title: Alternative Registries
+url: https://without.boats/blog/alternative-registries/
+published: "2017-10-23T21:10:21Z"
+feed: boats
+guid: https://without.boats/blog/alternative-registries/
+---
+
+# Alternative Registries
+
+cargo gained a new feature this week! You can now download dependencies from alternative registries, alongside the dependencies you download from crates.io. This is an important step in enabling organizations to distribute their internal libraries through cargo without requiring them to upload those libraries to a public registry.
+This feature will be available on nightly only, and it is gated behind the alternative-registries feature gate. We’ve used feature gates to iterate on new and unstable features in rustc since the 1.

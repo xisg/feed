@@ -1,0 +1,157 @@
+name = "blog"
+
+# Feeds ported from ~/.dotfiles/nom/config.yml
+
+[[feeds]]
+url  = "https://matklad.github.io/feed.xml"
+name = "matklad"
+
+[[feeds]]
+url  = "https://brooker.co.za/blog/atom.xml"
+name = "brooker"
+
+[[feeds]]
+url  = "https://graydon2.dreamwidth.org/data/atom"
+name = "graydon"
+
+[[feeds]]
+url  = "https://travisdowns.github.io/feed.xml"
+name = "travisdowns"
+
+[[feeds]]
+url  = "https://nullprogram.com/feed/"
+name = "nullprogram"
+
+[[feeds]]
+url  = "https://without.boats/index.xml"
+name = "boats"
+
+[[feeds]]
+url  = "https://smallcultfollowing.com/babysteps/atom.xml"
+name = "babysteps"
+
+[[feeds]]
+url  = "https://blog.llvm.org/index.xml"
+name = "llvm"
+
+[[feeds]]
+url  = "https://blog.regehr.org/feed"
+name = "regehr"
+
+[[feeds]]
+url  = "https://www.modular.com/blog/rss.xml"
+name = "modular"
+
+# Anthropic has no native feed; proxied via openrss.org (third-party scraper)
+[[feeds]]
+url  = "https://openrss.org/feed/www.anthropic.com/news"
+name = "anthropic-news"
+
+[[feeds]]
+url  = "https://openrss.org/feed/www.anthropic.com/research"
+name = "anthropic-research"
+
+[[feeds]]
+url  = "https://ziglang.org/devlog/index.xml"
+name = "zig-devlog"
+
+[[feeds]]
+url  = "https://danluu.com/atom.xml"
+name = "danluu"
+
+[[feeds]]
+url  = "https://research.swtch.com/feed.atom"
+name = "russcox"
+
+[[feeds]]
+url  = "https://blog.m-ou.se/index.xml"
+name = "marabos"
+
+[[feeds]]
+url  = "https://www.bunniestudios.com/blog/feed/"
+name = "bunnie"
+
+[[feeds]]
+url  = "https://lemire.me/blog/feed/"
+name = "lemire"
+
+[[feeds]]
+url  = "https://www.joelonsoftware.com/feed/"
+name = "joel"
+
+[[feeds]]
+url  = "https://commandcenter.blogspot.com/feeds/posts/default"
+name = "robpike"
+
+[[feeds]]
+url  = "https://wingolog.org/feed/atom"
+name = "wingo"
+
+[[feeds]]
+url  = "https://www.brendangregg.com/blog/rss.xml"
+name = "gregg"
+
+[[feeds]]
+url  = "https://tavianator.com/feed.atom"
+name = "tavianator"
+
+[[feeds]]
+url  = "https://interrupt.memfault.com/feed.xml"
+name = "memfault"
+
+[[feeds]]
+url  = "https://lwn.net/headlines/rss"
+name = "lwn"
+
+[[feeds]]
+url  = "https://habr.com/ru/rss/companies/yandex/articles/?fl=ru"
+name = "yandex"
+
+[[feeds]]
+url  = "https://thephd.dev/feed.xml"
+name = "thephd"
+
+[[feeds]]
+url  = "https://gustedt.wordpress.com/feed/"
+name = "gustedt"
+
+[[feeds]]
+url  = "https://sam.zeloof.xyz/feed/"
+name = "zeloof"
+
+[[feeds]]
+url  = "https://antirez.com/rss"
+name = "antirez"
+
+[[feeds]]
+url  = "https://www.paulgraham.com/articles.html"
+name = "paulgraham"
+
+[[feeds]]
+url  = "https://burntsushi.net/index.xml"
+name = "burntsushi"
+
+[[feeds]]
+url  = "https://andrewkelley.me/rss.xml"
+name = "andrewkelley"
+
+[[feeds]]
+url  = "https://tigerbeetle.com/blog/atom.xml"
+name = "tigerbeetle"
+
+[[feeds]]
+url  = "https://bun.com/rss.xml"
+name = "bun"
+
+[[feeds]]
+url  = "https://yosefk.com/blog/feed"
+name = "yosefk"
+
+# Sort order for `hrb list` / `hrb feed`. "desc" = newest first.
+ordering = "desc"
+
+# Mark items read when their file is opened (requires nvim autocmd).
+autoread = false
+
+# User-Agent for HTTP requests.
+user_agent = "hrb/0.1"

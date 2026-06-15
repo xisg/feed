@@ -1,0 +1,38 @@
+---
+title: Writing Is Magic
+url: http://brooker.co.za/blog/2022/11/08/writing.html
+published: "2022-11-08T00:00:00Z"
+feed: brooker
+guid: http://brooker.co.za/blog/2022/11/08/writing
+---
+
+# Writing Is Magic
+
+Magic can be dangerous.
+
+_Sometimes when folks ask me for advice at work, I write them very long emails to answer their question. Sometimes, those emails are generally interesting and not work-specific, so I share them here. A couple days ago somebody asked me about how to get better at communicating their ideas and opinions, how to extend their influence, and how to drive consensus. This was my reply._
+
+There are many ways to be influential. You can form 1:1 relationships with people, have small group meetings, do talks, send out a code review, or argue in Slack. All of those can be valuable at the right time. But there’s one tool that I choose most often: long-form writing. Writing is the closest thing I know to magic.
+
+Nearly every time I need to drive a difficult, subtle, or contentious decision, I write a document. Sometimes that’s half a page, sometimes its six pages. Sometimes much longer, although brevity is valuable. I see a few benefits to this approach that keep me coming back it it again and again.
+
+First, clarity. I’m sure you know the quote “Writing is nature’s way of letting you know how sloppy your thinking is”[1](#foot1), and knowing how sloppy your thinking is allows you to sharpen it, test your arguments, and test different explanations. I find, more often than not, that I understand something much less well when I sit down to write about it than when I’m thinking about it in the shower. In fact, I find that I change my own mind on things a lot when I try write them down. It really is a powerful tool for finding clarity in your own mind. Once you have clarity in your own mind, you’re much more able to explain it to others.
+
+Second, time. Getting people’s full, focused, attention on your ideas is very hard. Reading, if your team has a strong document culture, is one of the only ways to do that. You give people a couple pages to read, ideally on paper, and they’re likely to be quiet and focus on understanding your ideas for at least a few minutes. You get to be there, in their heads, with nothing else, for a while. You get to lay out an argument, tell a story, present some data, or ask their opinion without interruption, without back-and-forth. Just your voice. There are very few other ways to do that.
+
+Third, scale. Sometimes documents only live for an hour or so. They’re there to drive a decision, and when the decision is made the document is dead. Much more often, in my experience, they live well beyond the initial reading. I’ve had people ask me questions about documents I wrote more than a decade ago, that they’re still finding useful today. I love reading CS papers from before I was born. Writing scales in time much better than speaking. I also encourage people to share documents. They can go from the initial audience, to a whole team, to other stakeholders, to people working on similar problems. Writing scales in space much better than nearly any other way of communicating. Sometimes your writing may scale more than you want it to, in either time our space. You do need to watch out for that.
+
+Fourth, authority. For some reason, people tend to believe the things I write more strongly than the things I say. Maybe its the fact I took the time I write suggests its worth their time to read. I’ve found many times that I’ve said the same thing over and over and over, and then once I write it down suddenly its The Law. You need to be super careful with that effect, if you see it yourself. It can stifle discussion and communication. It can lead to people treating your words as more certain than they really are, of turning your musings into dogma[2](#foot2). Sometimes it doesn’t work at all, and you’ll write something down to no effect, but I don’t see that very often.
+
+Finally, memory. I don’t know if my memory is uniquely terrible, but I really do tend to forget things. I vividly remember the tuck shop menu from my primary school, 30 years ago. I don’t always remember my justification for decisions I was pushing for last week. Writing is my own record. My own way to go back and see what I was thinking then, and whether its still true. Sometimes I find that I was much smarter two weeks ago than I am now. Sometimes its the opposite. Either way, the record is something I find valuable.
+
+Writing takes time. Writing well takes a lot of time. On the other hand, the output of writing is almost always more clarity, and sometimes a clear decision. Over my career, I think I’ve wasted at least ten times more time going around and around in conversations without finding consensus than I have writing documents that didn’t turn out to be valuable. It’s very seldom that I think back over writing something and conclude that it wasn’t a good investment of my time. That can happen, and you have to watch for it, but it doesn’t happen to me a lot.
+
+My last point is about reading culture. Sitting down to read, really read for understanding, is a learned skill. It’s something I recommend that everybody practice, and model in their organizations. I like to discourage people from arguing in document comments. I especially discourage people from nitpicking. Seeking feedback _on the document_ rather than _on the ideas in the document_ is, of course, useful if you want to get better at writing. But it’s way easier for a reader to nitpick grammar than it is to engage with ideas, so I like to time box that kind of feedback or take it to a different channel.
+
+This isn’t a complete answer to your question, but a partial one. Write more.
+
+**Footnotes**
+
+1. Lamport [attributes this](https://dl.acm.org/doi/pdf/10.1145/2736348) to [Dick Guindon](https://en.wikipedia.org/wiki/Dick_Guindon), but there are other credible attributions out there. No matter who said it first, it seems true.
+2. Lev Grossman’s Magicians series has this ongoing theme about how dangerous magic is to the people to practice it, and a lot of the difficulty isn’t in harnessing power, its in having that power not destroy you when you do. I think about that a lot. Influence is something worth becoming great at, and I really admire some of the people who are the best at it, but you need to be really careful.

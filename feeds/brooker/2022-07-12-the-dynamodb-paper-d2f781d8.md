@@ -1,0 +1,70 @@
+---
+title: The DynamoDB paper
+url: http://brooker.co.za/blog/2022/07/12/dynamodb.html
+published: "2022-07-12T00:00:00Z"
+feed: brooker
+guid: http://brooker.co.za/blog/2022/07/12/dynamodb
+---
+
+# The DynamoDB paper
+
+The other database called Dynamo
+
+This week at USENIX ATC’22, a group of my colleagues[1](#foot1) from the AWS DynamoDB team are going to be presenting their paper [Amazon DynamoDB: A Scalable, Predictably Performant, and Fully Managed NoSQL Database Service](https://www.usenix.org/conference/atc22/presentation/vig). This paper is a rare look at a real-world distributed system that runs at massive scale.
+
+From the paper:
+
+> In 2021, during the 66-hour Amazon Prime Day shopping event, Amazon systems … made trillions of API calls to DynamoDB, peaking at 89.2 million requests per second
+
+89 million requests per second is a big database by any standards (and that’s just Amazon’s use of DynamoDB)!
+
+What’s exciting for me about this paper is that it covers DynamoDB’s journey, and how it has changed over time to meet customers’ needs. There are relatively few papers that cover this kind of change over time. For example:
+
+> The uniform distribution of throughput across partitions is based on the assumptions that an application uniformly accesses keys in a table and the splitting a partition for size equally splits the performance. However, we discovered that application workloads frequently have non-uniform access patterns both over time and over key ranges. When the request rate within a table is non-uniform, splitting a partition and dividing performance allocation proportionately can result in the hot portion of the partition having less available performance than it did before the split. Since throughput was allocated statically and enforced at a partition level, these non-
+> uniform workloads occasionally resulted in an application’s reads and writes being rejected, called throttling, even though the total provisioned throughput of the table was sufficient to meet its needs.
+
+This is the kind of assumption in a system design—that splitting makes performance better—that’s really easy to overlook when designing a system, and potentially difficult to fix when you’re in production. A lot of what makes systems like DynamoDB so useful is that they have these lessons baked-in, and the folks who’re using them don’t need to learn the same lesson themselves.
+
+A key little bit of history[2](#foot2):
+
+> These architectural discussions culminated in Amazon DynamoDB, a public service launched in 2012 that shared most of the name of the previous Dynamo system but little of its architecture.
+
+Reading the rest of the DynamoDB paper you can see the influence that Dynamo had, but also some major differences in the architecture. Most notable, probably, is that DynamoDB uses multi-Paxos[3](#foot3) for keeping replicas in sync:
+
+> The replicas for a partition form a replication group. The replication group uses Multi-Paxos for leader election and consensus.
+
+and a fairly straightforward leader election model for consistent reads and writes:
+
+> Only the leader replica can serve write and strongly consistent read requests. Upon receiving a write request, the leader of the replication group for the key being written generates a write-ahead log record and sends it to its peer (replicas). … Any replica of the replication group can serve eventually consistent reads.
+
+Like most big systems at AWS, the DynamoDB team is using formal methods (specifically TLA+) to specify and model check core parts of their system:
+
+> We use formal methods extensively to ensure the correctness of our replication protocols. The core replication protocol was specified using TLA+.
+
+**Caches and Metastability**
+
+Another great lesson from the paper is a reminder about the risks of caches (see [Caches, Modes, and Unstable Systems](https://brooker.co.za/blog/2021/08/27/caches.html)):
+
+> When a router received a request for a table it had not seen before, it downloaded the routing information for the entire table and cached it locally. Since the configuration information about partition replicas rarely changes, the cache hit rate was approximately 99.75 percent.
+
+What’s not to love about a 99.75% cache hit rate? The failure modes!
+
+> The downside is that caching introduces bimodal behavior. In the case of a cold start where request routers have empty caches, every DynamoDB request would result in a metadata lookup, and so the service had to scale to serve requests at the same rate as DynamoDB
+
+So this metadata table needs to scale from handling 0.25% of requests, to handling 100% of requests. A 400x potential increase in traffic! Designing and maintaining something that can handle rare 400x increases in traffic is super hard. To address this, the DynamoDB team introduced a distributed cache called MemDS.
+
+> A new partition map cache was deployed on each request router host to avoid the bi-modality of the original request router caches.
+
+Which leads to more background work, but less amplification in the failure cases.
+
+> The constant traffic to the MemDS fleet increases the load on the metadata fleet compared to the conventional caches where the traffic to the backend is determined by cache hit ratio, but prevents cascading failures to other parts of the system when the caches become ineffective.
+
+These cascading failures can lead to [metastable failure modes](https://brooker.co.za/blog/2021/05/24/metastable.html), and so preventing them architecturally and getting closer to [constant work](https://aws.amazon.com/builders-library/reliability-and-constant-work/) is important. Again, this is the kind of insight that comes from having run big systems for a long time, and a big part of the value that’s baked into DynamoDB.
+
+Check out the paper. If you’re interested in databases, distributed systems, or the realities of running at-scale systems, its well worth your time!
+
+**Footnotes**
+
+1. Mostafa Elhemali, Niall Gallagher, Nicholas Gordon, Joseph Idziorek, Richard Krog, Colin Lazier, Erben Mo, Akhilesh Mritunjai, Somu Perianayagam, Tim Rath, Swami Sivasubramanian, James Christopher Sorenson III, Sroaj Sosothikul, Doug Terry, and Akshat Vig (as we often do at AWS, this list is in alphabetical order, not the typical academic “first author” order you may be most familiar with).
+2. Referring here to the system described in De Candia et al, [Dynamo: Amazon’s Highly Available Key-value Store](https://www.allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf). That paper is rightfully quite famous and influential.
+3. Paxos, as usual, appearing as the bottom turtle a scale-out system.

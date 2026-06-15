@@ -1,0 +1,12 @@
+---
+title: Making progress in await syntax
+url: https://without.boats/blog/await-syntax/
+published: "2018-11-08T00:00:00Z"
+feed: boats
+guid: https://without.boats/blog/await-syntax/
+---
+
+# Making progress in await syntax
+
+One thing we’ve left as an unresolved question so far in the matter of async/await syntax is the exact final syntax for the await operation. In the current implementation, awaits are written using a compiler plugin:
+async fn foo() { await!(bar()); } This is not because of any technical limitation: the reason we have done this is that we have not decided on the precise, final syntax for the await operation.

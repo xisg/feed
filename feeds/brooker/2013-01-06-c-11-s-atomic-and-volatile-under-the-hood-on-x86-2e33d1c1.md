@@ -1,0 +1,131 @@
+---
+title: C++11's atomic and volatile, under the hood on x86
+url: http://brooker.co.za/blog/2013/01/06/volatile.html
+published: "2013-01-06T00:00:00Z"
+feed: brooker
+guid: http://brooker.co.za/blog/2013/01/06/volatile
+---
+
+# C++11's atomic and volatile, under the hood on x86
+
+How do C++11's atomic and volatile work?
+
+In my previous post [Java’s Atomic and volatile, under the hood on x86](http://brooker.co.za/blog/2012/11/13/increment.html) I look at Atomic and volatile in Java, and how they affect the generated assembly. In this post, I’m looking at [std::atomic](http://en.cppreference.com/w/cpp/atomic/atomic) and _volatile_ in C++.
+
+Like in Java, it’s [well known](http://stackoverflow.com/questions/8819095/concurrency-atomic-and-volatile-in-c11-memory-model) that _std::atomic_ and _volatile_ have different meanings in C++, but it’s still interesting to take a look at how that translates to what actually gets run. Let’s start with a very simple program:
+
+```
+for (int i = 0; i < 500000000; i++) {
+x += 0x3;
+}
+
+```
+
+Then define _x_ in one of three ways:
+
+```
+long x;
+volatile long x;
+std::atomic_long x;
+
+```
+
+Before digging directly into the assembly, we can compare the run-time of the three programs (on a Core2 Q6600 compiled with gcc4.6 -O2):
+
+- _long_ took 0.0018s
+- _volatile_ took 1.9s
+- _atomic\_long_ took 8.5s
+
+It’s clear from the difference in run times that these three programs do produce significantly different code. The step up from _long_ to _volatile long_ is 100x, and another 4x up to _atomic\_long_. Starting the with assembly for the _long_ version, we can see why it’s so fast:
+
+```
+addq    $1500000000, %rsi
+
+```
+
+Oh gcc, you’re sneaky. The compiler has completely discarded the loop, and calculated the result into a constant. Without the guarantees of _atomic_ or _volatile_, it’s free to make optimizations like this. Next, the volatile version:
+
+```
+  movl    $500000000, %eax
+.L2:
+  movq    x(%rip), %rdx
+  addq    $3, %rdx
+  subl    $1, %eax
+  movq    %rdx, x(%rip)
+  jne     .L2
+
+```
+
+The inclusion of volatile has forced the compiler to not only run the loop, but also load and store the variable from memory on every run (the two `movq` instructions). The overhead of this is clearly significant, but it’s hard to seperate the effects of the two. Moving the load and store out of the loop breaks the _volatile_ guarantee, but keeps the loop:
+
+```
+  movl	$500000000, %eax
+  movq	x(%rip), %rdx
+.L2:
+  addq	$3, %rdx
+  subl	$1, %eax
+  jne	.L2
+  movq	%rdx, x(%rip)
+
+```
+
+That version takes about 0.3s to run, so the it’s clear that [memory access time](http://norvig.com/21-days.html#answers) still dominates the run time of the program. It’s also somewhat interesting the gcc has chosen to load, modify and store instead of doing the add directly to memory. We can modify the original _volatile_ version to do that:
+
+```
+  movl	$500000000, %eax
+.L2:
+  addq	$3, x(%rip)
+  subl	$1, %eax
+  jne	.L2
+
+```
+
+That’s much less code, but it’s no faster. In fact, taking the average of a very large number of runs shows that it’s about 1% slower on my hardware. _perf stat_ tells the story for the unmodified load-modify-store code:
+
+```
+3,006,477,937 cycles
+2,504,227,487 instructions #    0.83  insns per cycle
+
+```
+
+and for the modified code:
+
+```
+3,035,431,555 cycles
+1,504,575,146 instructions #    0.50  insns per cycle
+
+```
+
+The modified code saves two fifths of the instructions, but drops the instructions per cycle by slightly more. After that diversion, on to the _atomic\_long_ version of our original program:
+
+```
+   movl    $500000000, %eax
+.L2:
+   lock addq       $3, x(%rip)
+   subl    $1, %eax
+   jne     .L2
+
+```
+
+GCC is generating smarter code than [java does with volatile](http://brooker.co.za/blog/2012/11/13/increment.html), but uses a similar basic approach. It uses the _lock_ prefixed instruction to generate a write barrier. In this case, gcc uses the same instruction to do the addition, which makes the code much simpler (and much faster on some machines). The performance impact of that lock prefix, compared to the nearly identical code above without it, is quite clear. _perf stat_ says:
+
+```
+13,522,633,468 cycles
+1,513,530,642 instructions #    0.11  insns per cycle
+
+```
+
+That’s 0.11 instructions per cycle compared to 0.5 for the non-locked version above. Comparing these two pieces of code makes the difference of intention between _atomic_ and _volatile_ quite clear. Even ignoring memory ordering issues, the _volatile_ code can lead to the incorrect answer with concurrent access. Take another look at that code:
+
+```
+  movl    $500000000, %eax
+.L2:
+  movq    x(%rip), %rdx
+  addq    $3, %rdx
+  subl    $1, %eax
+  movq    %rdx, x(%rip)
+  jne     .L2
+
+```
+
+If another writer wrote to the location of _x_ between the first and second `movq` instructions, their updates would be completely lost. Clearly, volatile doesn’t imply atomic. The picture gets even worse on a multi-processor machine, where the lack of any barriers means that the results are highly unlikely to be correct. Those of us who move between C++ and Java need to be very clear about the difference in meaning between C++ volatile and Java volatile. It’s really unfortunate that the designers of Java didn’t chose a different keyword.

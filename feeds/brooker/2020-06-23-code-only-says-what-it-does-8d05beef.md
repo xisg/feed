@@ -1,0 +1,83 @@
+---
+title: Code Only Says What it Does
+url: http://brooker.co.za/blog/2020/06/23/code.html
+published: "2020-06-23T00:00:00Z"
+feed: brooker
+guid: http://brooker.co.za/blog/2020/06/23/code
+---
+
+# Code Only Says What it Does
+
+Only loosely related to what it should do.
+
+Code says what it does. That’s important for the computer, because code is the way that we ask the computer to do something. It’s OK for humans, as long as we never have to modify or debug the code. As soon as we do, we have a problem. Fundamentally, debugging is an exercise in changing what a program does to match what it should do. It requires us to know what a program should do, which isn’t captured in the code. Sometimes that’s easy: What it does is crash, what it should do is _not crash_. Outside those trivial cases, discovering intent is harder.
+
+Debugging when _should do_ is subtle, such as when building distributed systems protocols, is especially difficult. In our [Millions of Tiny Databases](https://www.usenix.org/conference/nsdi20/presentation/brooker) paper, we say:
+
+> Our code reviews, simworld tests, and design meetings frequently referred back to the TLA+ models of our protocols to resolve ambiguities in Java code or written communication.
+
+The problem is that the implementation (in Physalia’s case the Java code) is both an imperfect implementation of the protocol, and an overly-specific implementation of the protocol. It’s overly-specific because it needs to be fully specified. Computers demand that, and no less, while the protocol itself has some leeway and wiggle room. It’s also overly-specific because it has to address things like low-level performance concerns that the specification can’t be bothered with.
+
+_Are those values in an ArrayList because order is actually important, or because O(1) random seeks are important, or some other reason? Was it just the easiest thing to write? What happens when I change it?_
+
+Business logic code, while lacking the cachet of distributed protocols, have even more of these kinds of problems. Code both over-specifies the business logic, and specifies it inaccurately. I was prompted to write this by a tweet from @mcclure111 where she hits the nail on the head:
+
+> Since most software doesn't have a formal spec, most software "is what it does", there's an incredible pressure to respect authorial intent when editing someone else's code. You don't know which quirks are load-bearing.
+>
+> — mcc 🏳️‍⚧️🏳️‍🌈 (@mcclure111) [June 20, 2020](https://twitter.com/mcclure111/status/1274422600236765186?ref_src=twsrc%5Etfw)
+
+This is a major problem with code: _You don’t know which quirks are load-bearing._ You may remember, or be able to guess, or be able to puzzle it out from first principles, or not care, but all of those things are slow and error-prone. What can we do about it?
+
+**Design Documentation**
+
+Documentation is uncool. Most software engineers seem to come out of school thinking that documentation is below them ( _tech writer work_), or some weird thing their SE professor talked about that is as archaic as Fortran. Part of this is understandable. My own software engineering courses emphasized painstakingly documenting the implementation in UML. No other mention of documentation was made. Re-writing software in UML helps basically nobody. I finished my degree thinking that documentation was unnecessary busywork. Even the [Agile Manifesto](https://agilemanifesto.org/) agreed with me[1](#foot1):
+
+> Working software over comprehensive documentation
+
+What I discovered later was that design documentation, encoding the intent and decisions made during developing a system, helps teams be successful in the short term, and people be successful in the long term. Freed from fitting everything in my head, emboldened by the confidence that I could rediscover forgotten facts later, I could move faster. The same applies to teams.
+
+One thing I see successful teams doing is documenting not only the _what_ and _why_ behind their designs, but the _how they decided_. When it comes time to make changes to the system—either for debugging or in response to changing requirements—these documents are invaluable. It’s hard to decide whether its safe to change something, when you don’t know why it’s like that in the first place. The record of how you decided is important because you are a flawed human, and understanding how you came to a decision is useful to know when that decision seems strange, or surprising.
+
+This documentation process doesn’t have to be heavyweight. You don’t have to draw painstaking [ER diagrams](https://en.wikipedia.org/wiki/Entity%E2%80%93relationship_model) unless you think they are helpful. You should probably ignore UML entirely. Instead, describe the system in prose as clearly and succinctly as you can. One place to start is by building an RFC template for your team, potentially inspired by one that you find on the web. [SquareSpace](https://static1.squarespace.com/static/56ab961ecbced617ccd2461e/t/5d792e5a4dac4074658ce64b/1568222810968/Squarespace+RFC+Template.pdf)’s template seems reasonable. Some designs will fit well into that RFC format, other’s won’t. Prefer narrative writing where you can.
+
+Then, keep the documents. Store them somewhere safe. Soak them in vinegar [and tie them around your chest](https://www.almanac.com/content/home-remedies-cough-relief). You’re going to want to make sure that the people who need to maintain the system can find them. As they are spelunking through history, help them feel more like a library visitor and less like Lara Croft.
+
+I’m not advocating for Big Design Up Front. Many of the most important things we learn about a project we learn during the implementation. Some of the most important things we learn years after the implementation is complete. Design documentation isn’t a static one-time ahead-of-time deliverable, but an ongoing process. Most importantly, design documentation is not a commitment to bad ideas. If it’s wrong, fix it and move forward. Documentation is not a deal with the devil.
+
+**Comments**
+
+Few topics invite a programmer flame war like comments. We’re told that comments are silly, or childish, or make it hard to show how manly you are in writing that convoluted mess of code. If it was hard to write, it should be hard to read. After all, you’re the James Joyce of code.
+
+That silliness aside, back to @mcclure111’s thread:
+
+> This means comments that \*reveal\* authorial intent are valuable, and comments that reveal \*there was no authorial intent\* are even more valuable. Without those hints, you're left editing superstitiously, preserving quirks even when you don't know why. [https://t.co/YhvWnXjp9i](https://t.co/YhvWnXjp9i)
+>
+> — mcc 🏳️‍⚧️🏳️‍🌈 (@mcclure111) [June 20, 2020](https://twitter.com/mcclure111/status/1274422825831596039?ref_src=twsrc%5Etfw)
+
+Comments allow us to encode _authorial intent_ into our code in a way that programming languages don’t always. Types, traits, interfaces, and variable names do put intent into code, but not completely (I see you, type system maximalists). These same things allow us to communicate a lack of intent—consider [RandomAccess](https://docs.oracle.com/javase/8/docs/api/java/util/RandomAccess.html) vs [ArrayList](https://docs.oracle.com/javase/8/docs/api/java/util/ArrayList.html)—but are also incomplete. Well-commented code should make the intent of the author clear, especially in cases where that intent is either lost in the translation to code, or where implementation constraints hide the intent of the design. Code comments that link back to design documents are especially useful.
+
+Some languages need comments more than others. Some, like SQL, I find to nearly always obscure the intent of the design behind implementation details.
+
+**Formal Specification**
+
+In [Who Builds a House Without Drawing Blueprints?](https://cacm.acm.org/magazines/2015/4/184705-who-builds-a-house-without-drawing-blueprints/fulltext) Leslie Lamport writes:
+
+> The need for specifications follows from two observations. The first is that it is a good idea to think about what we are going to do before doing it, and as the cartoonist Guindon wrote: “Writing is nature’s way of letting you know how sloppy your thinking is.”
+
+> The second observation is that to write a good program, we need to think above the code level.
+
+I’ve found that specification, from informal specification with narrative writing to formal specification with TLA+, makes writing programs faster and helps reduce mistakes. As much as I like that article, I think Lamport misses a key part of the value of formal specification: it’s a great communication tool. In developing some of the trickiest systems I’ve built, I’ve found that heavily-commented formal specifications are fantastically useful documentation. Specification languages are all about _intent_, and some make it easy to clearly separate intent from implementation.
+
+Again, from our [Millions of Tiny Databases](https://www.usenix.org/conference/nsdi20/presentation/brooker) paper:
+
+> We use TLA+ extensively at Amazon, and it proved exceptionally useful in the development of Physalia. Our team used TLA+ in three ways: writing specifications of our protocols to check that we understand them deeply, model checking specifications against correctness and liveness properties using the TLC model checker, and writing extensively commented TLA+ code to serve as the documentation of our distributed protocols. While all three of these uses added value, TLA+’s role as a sort of automatically tested (via TLC),and extremely precise, format for protocol documentation was perhaps the most useful.
+
+Formal specifications make excellent documentation. Like design docs, they aren’t immutable artifacts, but a reflection of what we have learned about the problem.
+
+\\*\\* Conclusion \*\*
+
+Building long-lasting, maintainable, systems requires not only communicating with computers, but also communicating in space with other people, and in time with our future selves. Communicating, recording, and indexing the intent behind our designs is an important part of that picture. Make time for it, or regret it later.
+
+**Footnotes**
+
+1. To be charitable to the Agile folks, _comprehensive_ does seem to be load-bearing.

@@ -1,0 +1,60 @@
+---
+title: Locality, and Temporal-Spatial Hypothesis
+url: http://brooker.co.za/blog/2025/10/05/locality.html
+published: "2025-10-05T00:00:00Z"
+feed: brooker
+guid: http://brooker.co.za/blog/2025/10/05/locality
+---
+
+# Locality, and Temporal-Spatial Hypothesis
+
+Good fences make good neighbors?
+
+Last week at PGConf NYC, I had the pleasure of hearing Andres Freund talking about the great work he’s been doing to bring async IO to Postgres 18. One particular result caught my eye: a large difference in performance between forward and reverse scans, seemingly driven by _read ahead_ [1](#foot1). The short version is that IO layers (like Linux’s) optimize performance by proactively pre-fetching data ahead of the current read point in a file, so it’s already cached when needed. Notably, most of these systems don’t do this backwards. This leads to a big difference in performance between forward scans (where the pages are already in the cache when they’re needed) and backward scans (where the database needs to block on IO to fetch the next page).
+
+This lead me to thinking more about a particular hypothesis behind many database designs: a _temporal-spatial locality_ hypothesis[2](#foot2). Before we get there, let’s talk about locality more generally, because it might be the single most important idea in database performance (and computer systems performance generally).
+
+- _Temporal locality_ is the idea that data accessed recently is likely to be accessed again soon. This idea is what’s behind CPU caches, database buffer pools, and most caches you’ll come across in computer systems.
+- _Spatial locality_ is the idea that when we access data, we’re likely to access _nearby_ data soon.
+
+Almost all database systems take advantage of these forms of locality, and would lost significant performance without taking advantage of them.
+
+Stacks of books could be written about these ideas. Stacks of books have been written about these ideas. We could talk about [cache-oblivious algorithms](https://en.wikipedia.org/wiki/Cache-oblivious_algorithm), or [non-polluting read and write instructions](https://developer.arm.com/documentation/dui0801/l/A64-Floating-point-Instructions/STNP--SIMD-and-FP---A64-), or have an argument about linked lists. Instead, I want to zoom in to a particular idea in databases: _temporal-spatial hypothesis_.
+
+The hypothesis I mean has a definition something like this:
+
+> _Temporal-spatial locality_ is the idea that data that was written at approximately the same time will be read at approximately the same time, and therefore should be stored near each other[4](#foot4).
+
+Is the Temporal-Spatial Hypothesis true?
+
+In a streaming system, where keys are written in order by a producer and read in order by subscribers, the _temporal-spatial_ hypothesis is trivially true. Most real-world streaming systems are highly optimized based on this assumption, and choose on-disk formats and APIs that take advantage of it. Time-series, metrics, and observability systems mostly behave the same way. Readers in these systems are normally interested in a window of time, using the same concept of time that writers had.
+
+Hash-based databases (like [DynamoDB](https://aws.amazon.com/dynamodb/)) reject the _temporal-spatial hypothesis_. Or at least don’t optimize for it. When new rows are created, they are assigned a large random key (often by hashing the natural primary key), which are then spread over the storage space. This has huge write-time advantages, especially in mitigating write-time hot spots. They pay the cost at read time: an in-order scan of a table is no more efficient than a random scan.
+
+Relational schemas that assign large surrogate keys (such as `uuid` s) to items similarly reject the hypothesis[3](#foot3). Distributed and sharded databases get the same hot-spot avoiding benefits, which can be significant. Single-box databases may get better write performance from reduced lock or latch contention, or worse write performance because of reduced cache effectiveness. `uuid` keys can significantly reduce read performance in both types of systems, again by defeating spatial locality and making effective cache sizes smaller. These schemas may still be a good choice for data modelling reasons. Many such schemas restore the temporal ordering, through a layer of indirection, by indexing on a timestamp column.
+
+The flip side of that is a lot of relational schemas use time-ordered primary keys ( [SERIAL](https://www.postgresql.org/docs/current/datatype-numeric.html#DATATYPE-SERIAL), [AUTO\_INCREMENT](https://dev.mysql.com/doc/refman/8.4/en/example-auto-increment.html), etc) even when reads aren’t correlated in time. This leads to increased write-time contention with no particular read-time benefit. In turn, database systems spend significant effort weakening the guarantees around these time-ordered keys. These optimizations include making them not truly ordered (see [CACHE](https://www.postgresql.org/docs/current/sql-createsequence.html) in Postgres, for example), and by giving them their own special isolation rules (see the rollback and visibility behavior of [nextval](https://www.postgresql.org/docs/current/functions-sequence.html) in Postgres, for example).
+
+I don’t have a lot of data to back this up, but my belief is that the _temporal-spatial_ hypothesis is weakly true for OLTP workloads generally, but perhaps only to the extent that recent keys are hotter keys (the _temporal hypothesis_), rather than a strong correlation between keys written at similar times. However, there are some workloads for which it is a key optimization, and these workloads need to either use data structures optimized for this fact, or very carefully design their schemas with knowledge of their database system’s underlying data structures.
+
+_Attempting to be a little crisper_
+
+Let me attempt to be a little crisper about the _temporal-spatial hypothesis_, and how it differs from other common ideas about locality. Let’s say we have keys $K = {K\_0, \\ldots, K\_i, K\_{i+1}, \\ldots}$, and that for each key $K\_i$ we have time since write $K^{W}\_i$, time since the last access (read or write) $K^{A}\_i$, and a probability $P\_r(K\_i)$ that it’ll be read again soon.
+
+- The _temporal hypothesis_ is that $P\_r(K\_i)$ is inversely related to $K^{A}\_i$. In other words, the more time that’s passed since a key was last accessed, the less likely it is to be accessed again soon.
+- A corollary to the temporal hypothesis is that $P\_r(K\_i)$ more strongly affected by $K^{W}\_i$ than $K^{A}\_i$ (i.e. recency of creation is a strong signal for heat).
+- The _spatial hypothesis_ is that $P\_r(K\_i)$ is inversely related to $K^{A}\_{i-1}$ or $K^{A}\_{i+1}$ (or, more generally $K^{A}\_{i+j}$ for small integers $j$ )[5](#foot5). In other words, a key is more likely to be accessed soon if a nearby key was accessed recently.
+
+Then, lets say we have the array $\\omega$, which is the set $K$ ordered by $K^W$ (e.g. $\\omega\_i$ is the key written immediately after $\\omega\_{i-1}$). Our spatial-temporal hypothesis is:
+
+- The _temporal-spatial_ hypothesis is that $P\_r(\\omega\_i)$ related to $P\_r(\\omega\_{i-1})$ or $P\_r(\\omega\_{i+1})$ (or, more generally $P\_r(\\omega\_{i+j})$ for small integers $j$). In other words, keys written nearby in time are likely to be read nearby in time.
+
+Notice how, if the natural order of keys matches the write order of keys, and keys are stored in natural order, the _spatial_ and _temporal-spatial_ hypotheses are the same.
+
+_Footnotes_
+
+1. At least that was my understanding, but there was a lot going on in the talk, and I’m not a deep Postgres expert. My apologies to Andreas if I’m misrepresenting his results here.
+2. By _hypothesis_, here I mean an assumption we’re making that we’re baking into the system design. Consider the _generational hypothesis_ behind many tracing garbage collector designs, which makes the assumption that objects tend to have short lifetimes. Or, more generally, that object lifetimes tend to be Pareto-distributed (an idea related to the [Lindy Effect](https://en.wikipedia.org/wiki/Lindy_effect)).
+3. At least in common database storage formats, which keep keys in key order to optimize for `O(log N)` worst-case lookups based on key equality.
+4. _stored near each other_ here is taking advantage of the ways that database systems already optimize for spatial locality. A more general version could instead say _and therefore be stored to optimize this access pattern_.
+5. The story I told in the beginning about the performance of forward and backward scans is simply stating that the system was optimizing for the $K^{A}\_{i-1}$ case and not the $K^{A}\_{i+1}$ case.

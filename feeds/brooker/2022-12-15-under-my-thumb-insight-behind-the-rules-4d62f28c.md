@@ -1,0 +1,80 @@
+---
+title: 'Under My Thumb: Insight Behind the Rules'
+url: http://brooker.co.za/blog/2022/12/15/thumb.html
+published: "2022-12-15T00:00:00Z"
+feed: brooker
+guid: http://brooker.co.za/blog/2022/12/15/thumb
+---
+
+# Under My Thumb: Insight Behind the Rules
+
+My left thumb is exactly 25.4mm wide.
+
+Starting off in a new field, you hear a lot of _rules of thumb_. Rules for estimating things, thinking about things, and (ideally) simplifying tough decisions. When I started in Radar, I heard:
+
+> the transmitter makes up three quarters of the cost of a radar system
+
+and when I started building computer systems, I heard a lot of things like:
+
+> hardware is free, developers are expensive
+
+and, the ubiquitous:
+
+> premature optimization is the root of all evil.
+
+None of these things are true. Some are less true than others[2](#foot2). Mostly, they’re so context dependent that stripping them of their context renders them meaningless. On the other hand, heuristics like this can be exceptionally valuable, saving us time reasoning things through from first principles, and allowing rapid exploration of a design space. Can we make these truisms more true, and more useful, by turning to them into frameworks for quantitative thinking?
+
+**The 5 Minute Rule**
+
+Jim Gray’s [famous 5 minute rule](https://dl.acm.org/doi/pdf/10.1145/38713.38755), from 1987:
+
+> Data referenced every five minutes should be memory resident.
+
+Today, thirty five years later, Gray’s five minute rule is just as misleading as the ones above[1](#foot1). What we’re left with isn’t a rule, but a powerful and durable insight. Gray and Putzolu’s observation was that we can calculate the cost of something (storing a page of data in memory) and the cost of replacing that thing (reading the data from storage), and _quantitatively estimate_ how long we should keep the thing.
+
+They did it like this:
+
+> The derivation of the five minute rule goes as follows: A disc, and half a controller comfortably deliver 15 random accesses per second and are priced at about 15K$ So the price per disc
+> access per second is about 1K$/a/s. The extra CPU and channel cost for supporting a disc is 1K$/a/s. So one disc access per second costs about 2K$/a/s.
+
+> A megabyte of main memory costs about 5K$, so a kilobyte costs 5$. If making a 1Kb data record main-memory resident saves 1a/s, then it saves about 2K$ worth of disc accesses at a cost of 5$, a good deal. If it saves .1a/s then it saves about 200$, still a good deal. Continuing this, the break-even point is one access every 2000/5 - 400 seconds. So, any 1KB record accessed more frequently than every 400 seconds should live in main memory.
+
+$5000 a Megabyte! Wow! But despite the straight-from-the-80s memory pricing, the insight here is durable. We can plug our storage costs, memory costs, and access costs into the story problem and get some real insight into the problems of today.
+
+**Hardware is Free?**
+
+Let’s go back to
+
+> hardware is free, developers are expensive.
+
+Can we make that more quantitative?
+
+The [Bureau of Labor Statistics says](https://www.bls.gov/ooh/computer-and-information-technology/software-developers.htm) that the median US software developer earns $52.41 an hour. A Graviton core in EC2, as of today, costs around $0.04 an hour. So it’s worth spending an hour of developer time to save anything more than around 1300 core hours. That’s about two months, so we can get write a better rule:
+
+> It’s worth spending an hour of developer time to save two core months.
+
+Just as with Gray and Putzolu’s rule, this one is highly sensitive to your constants (developer pay, core cost, overheads, etc). But the quantitative method is durable, as is the idea that we can quickly _quantitatively estimate_ things like this. That idea is much more powerful than rules of thumb.
+
+**The Irredeemable?**
+
+Some rules, on the other hand, are stubbornly difficult to turn into quantitative tools. Take Jevon’s Paradox, for example[3](#foot3):
+
+> in the long term, an increase in efficiency in resource use will generate an increase in resource consumption rather than a decrease.
+
+If you’ve spent any time at all online, you’ll have run across folks using Jevon’s Paradox as if it were some immutable law of the universe to dismiss any type of conversation or economic effort. If we’re battling with truisms, I prefer [Zeynep’s Law](https://twitter.com/zeynep/status/1478766408691556353?lang=en):
+
+> Zeynep’s law: Until there is substantial and repeated evidence otherwise, assume counterintuitive findings to be false, and second-order effects to be dwarfed by first-order ones in magnitude.
+
+Both of these truisms seem true. They get us nodding our heads, and may even get us thinking. Unfortunately their use is limited by the fact that they don’t provide us with any tools for thinking about when they are valid, and extending them to meet our own context. From a quantitative perspective, they may be irredeemable. Not useless, just limited in power.
+
+**Conclusion**
+
+Engineering is, and software engineering sometimes stubbornly is not, a quantitative and economic discipline. I think we’d do well to emphasize the quantitative and economic side of our field. In the words of Arthur M. Wellington:
+
+> It would be well if engineering were less generally thought of, and even defined, as the art of constructing. In a certain important sense it is rather the art of not constructing; or, to define it rudely but not inaptly, it is the art of doing that well with one dollar, which any bungler can do with two after a fashion.
+
+**Footnotes**
+
+1. Or maybe it isn’t. In [The five-minute rule thirty years later](https://infoscience.epfl.ch/record/230398/files/adms-talk.pdf) from 2017, Appuswamy et al find that for the combination of DRAM and SATA SSD there’s around a 7 minute rule. That’s very close! On the other hand, SSD performance has changed so much since 2022 that the rule is probably broken again.
+2. And then there are the universally constant ones, like π=3 and g=10, which don’t change, but whether they are right or not is very dependent on context. Except π, which is always 3.
+3. Definition from [Unraveling the Complexity of the Jevons Paradox: The Link Between Innovation, Efficiency, and Sustainability](https://www.frontiersin.org/articles/10.3389/fenrg.2018.00026/full), which is worth reading.

@@ -1,0 +1,257 @@
+---
+title: The Hunt for the Fastest Zero
+url: https://travisdowns.github.io/blog/2020/01/20/zero.html
+published: "2020-01-20T00:00:00Z"
+feed: travisdowns
+guid: https://travisdowns.github.io/blog/2020/01/20/zero
+---
+
+# The Hunt for the Fastest Zero
+
+Let’s say I ask you to fill a `char` array of size `n` with zeros. I don’t know why, exactly, but please play along for now.
+
+If this were C, we would probably reach for `memset`, but let’s pretend we are trying to write idiomatic C++ instead.
+
+You might come up with something like[1](https://travisdowns.github.io/blog/2020/01/20/zero.html/#fn:function):
+
+```
+void fill1(char *p, size_t n) {
+    std::fill(p, p + n, 0);
+}
+
+```
+
+I’d give this solution full marks. In fact, I’d call it more or less the canonical modern C++ solution to the problem.
+
+What if told you there was a solution that was up to about 29 times faster? It doesn’t even require sacrificing any goats to the C++ gods, either: just adding three characters:
+
+```
+void fill2(char *p, size_t n) {
+    std::fill(p, p + n, '\0');
+}
+
+```
+
+Yes, switching `0` to `'\0'` speeds this up by nearly a factor of _thirty_ on my SKL box[2](https://travisdowns.github.io/blog/2020/01/20/zero.html/#fn:qb), at least with my default compiler (gcc) and optimization level (-O2):
+
+FunctionBytes / Cyclefill11.0fill229.1
+
+The why becomes obvious if you look at the [assembly](https://godbolt.org/z/O_f3Jx):
+
+**fill1:**
+
+```
+fill1(char*, unsigned long):
+        add     rsi, rdi
+        cmp     rsi, rdi
+        je      .L1
+.L3:
+        mov     BYTE PTR [rdi], 0  ; store 0 into memory at [rdi]
+        add     rdi, 1             ; increment rdi
+        cmp     rsi, rdi           ; compare rdi to size
+        jne     .L3                ; keep going if rdi < size
+.L1:
+        ret
+
+```
+
+This version is using a byte-by-byte copy loop, which I’ve annotated – it is more or less a 1:1 translation of how you’d imagine `std::fill` is written. The result of 1 cycle per byte is exactly what we’d expect using [speed limit analysis](https://travisdowns.github.io/blog/2019/06/11/speed-limits.html): it is simultaneously limited by two different bottlenecks: 1 taken branch per cycle, and 1 store per cycle.
+
+The `fill2` version doesn’t have a loop at all:
+
+**fill2:**
+
+```
+fill2(char*, unsigned long):
+        test    rsi, rsi
+        jne     .L8                ; skip the memcpy call if size == 0
+        ret
+.L8:
+        mov     rdx, rsi
+        xor     esi, esi
+        jmp     memset             ; tailcall to memset
+
+```
+
+Rather, it simply defers immediately to `memset`. We aren’t going to dig into the assembly for `memset` here, but the fastest possible `memset` would run at 32 bytes/cycle, limited by 1 store/cycle and maximum vector the width of 32 bytes on my machine, so the measured value of 29 bytes/cycle indicates it’s using an implementation something along those lines.
+
+So that’s the _why_, but what’s the _why of the why_ (second order why)?
+
+I thought this had something to do with the optimizer. After all, at `-O3` even the `fill1` version using the plain `0` constant calls `memset`.
+
+I was wrong, however. The answer actually lies in the implementation of the C++ standard library (there are various, gcc is using libstdc++ in this case). Let’s take a look at the implementation of `std::fill` (I’ve reformatted the code for clarity and removed some compile-time concept checks):
+
+```
+  /*
+   *  ...
+   *
+   *  This function fills a range with copies of the same value.  For char
+   *  types filling contiguous areas of memory, this becomes an inline call
+   *  to @c memset or @c wmemset.
+  */
+  template<typename _ForwardIterator, typename _Tp>
+  inline void fill(_ForwardIterator __first, _ForwardIterator __last, const _Tp& __value)
+  {
+    std::__fill_a(std::__niter_base(__first), std::__niter_base(__last), __value);
+  }
+
+```
+
+The included part of the comment[3](https://travisdowns.github.io/blog/2020/01/20/zero.html/#fn:wmem) already hints at what is to come: the implementor of `std::fill` has apparently considered specifically optimizing the call to a `memset` in some scenarios. So we keep following the trail, which brings us to the helper method `std::__fill_a`. There are two overloads that are relevant here, the general method and an overload which handles the special case:
+
+```
+  template<typename _ForwardIterator, typename _Tp>
+  inline typename
+  __gnu_cxx::__enable_if<!__is_scalar<_Tp>::__value, void>::__type
+  __fill_a(_ForwardIterator __first, _ForwardIterator __last, const _Tp& __value)
+  {
+    for (; __first != __last; ++__first)
+      *__first = __value;
+  }
+
+  // Specialization: for char types we can use memset.
+  template<typename _Tp>
+  inline typename
+  __gnu_cxx::__enable_if<__is_byte<_Tp>::__value, void>::__type
+  __fill_a(_Tp* __first, _Tp* __last, const _Tp& __c)
+  {
+    const _Tp __tmp = __c;
+    if (const size_t __len = __last - __first)
+      __builtin_memset(__first, static_cast<unsigned char>(__tmp), __len);
+  }
+
+```
+
+Now we see how the `memset` appears. It is called explicitly by the second implementation shown above, selected by `enable_if` when the SFINAE condition `__is_byte<_Tp>` is true. Note, however, that unlike the general function, this variant has a single template argument: `template<typename _Tp>`, and the function signature is:
+
+```
+__fill_a(_Tp* __first, _Tp* __last, const _Tp& __c)
+
+```
+
+Hence, it will only be considered when the `__first` and `__last` pointers which delimit the range have the _exact same type as the value being filled_. When when you write `std::fill(p, p + n, 0)` where `p` is `char *`, you rely on template type deduction for the parameters, which ends up deducing `char *` and `int` for the iterator type and value-to-fill type, _because `0` is an integer constant_.
+
+That is, it is if you had written:
+
+```
+std::fill<char *, int>(p, p + n, 0);
+
+```
+
+This prevents the clever `memset` optimization from taking place: the overload that does it is never called because the iterator value type is different than the value-to-fill type.
+
+This suggests a fix: we can simply force the template argument types rather than rely on type deduction:
+
+```
+void fill3(char *p, size_t n) {
+    std::fill<char *, char>(p, p + n, 0);
+}
+
+```
+
+This way, we [get the `memset` version](https://godbolt.org/z/VTssh9).
+
+Finally, why does `fill2` using `'\0'` get the fast version, without forcing the template arguments? Well `'\0'` is a `char` constant, so the value-to-assign type is `char`. You could achieve the same effect with a cast, e.g., `static_cast<char>(0)` – and for buffers which have types like `unsigned char` this is necessary because `'\0'` does not have the same type as `unsigned char` (at least [on gcc](https://godbolt.org/z/YQKp7V)).
+
+One might reasonably ask if this could be fixed in the standard library. I think so.
+
+One idea would be to keying off of _only_ the type of the `first` and `last` pointers, like this:
+
+```
+  template<typename _Tp, typename _Tvalue>
+  inline typename
+  __gnu_cxx::__enable_if<__is_byte<_Tp>::__value, void>::__type
+  __fill_a(_Tp* __first, _Tp* __last, const _Tvalue& __c)
+  {
+    const _Tvalue __tmp = __c;
+    if (const size_t __len = __last - __first)
+      __builtin_memset(__first, static_cast<unsigned char>(__tmp), __len);
+  }
+
+```
+
+This says: who cares about the type of the value, it is going to get converted during assignment to the value type of the pointer anyways, so just look at the pointer type. E.g., if the type of the value-to-assign `_Tvalue` is `int`, but `_Tp` is `char` then this expands to this version, which is totally equivalent:
+
+```
+  __fill_a(char* __first, char* __last, const int& __c)
+  {
+    const int __tmp = __c;
+    if (const size_t __len = __last - __first)
+      __builtin_memset(__first, static_cast<unsigned char>(__tmp), __len);
+  }
+
+```
+
+This works … for simple types like `int`. Where it fails is if the value to fill has a tricky, non-primitive type, like this:
+
+```
+struct conv_counting_int {
+    int v_;
+    mutable size_t count_ = 0;
+
+    operator char() const {
+        count_++;
+        return (char)v_;
+    }
+};
+
+size_t fill5(char *p, size_t n) {
+    conv_counting_int zero{0};
+    std::fill(p, p + n, zero);
+    return zero.count_;
+}
+
+```
+
+Here, the pointer type passed to `std::fill` is `char`, but you cannot safely apply the `memset` optimization above, since the `conv_counting_int` counts the number of times it is converted to `char`, and this value will be wrong (in particular, it will be `1`, not `n`) if you perform the above optimization.
+
+This can be fixed. You could limit the optimization to the case where the pointer type is char-like _and_ the value-to-assign type is “simple” in the sense that it won’t notice how many times it has been converted. A sufficient check would be that the type is scalar, i.e. `std::is_scalar<T>` – although there is probably a less conservative check possible. So something like this for the SNIFAE check:
+
+```
+  template<typename _Tpointer, typename _Tp>
+    inline typename
+    __gnu_cxx::__enable_if<__is_byte<_Tpointer>::__value && __is_scalar<_Tp>::__value, void>::__type
+    __fill_a( _Tpointer* __first,  _Tpointer* __last, const _Tp& __value) {
+      ...
+
+```
+
+Here’s [an example](https://godbolt.org/z/PXRWSB) of how that would work. It’s not fully fleshed out but shows the idea.
+
+Finally, one might ask why `memset` _is_ used when gcc is run at `-O3` or when clang is used ( [like this](https://godbolt.org/z/9nhWAh)). The answer is the optimizer. Even if the compile-time semantics of the language select what appears to a byte-by-byte copy loop, the compiler itself can transform that into `memset`, or something else like a vectorized loop, if it can prove it is `as-if` equivalent. That recognition happens at `-O3` for `gcc` but at `-O2` for clang.
+
+### What Does It Mean
+
+So what does it all mean? Is there a moral to this story?
+
+Some use this as evidence that the somehow C++ and/or the STL are irreparably broken. I don’t agree. Some other languages, even “fast” ones, will _never_ give you the `memset` speed, although many will - but many of those that do (e.g., `java.util.Arrays.fill()`) do it via special recognition or handling of the function by the compiler or runtime. In the C++ standard library, the optimization the library writers have done is available to anyone, which is a big advantage. That the optimization fails, perhaps unexpectedly, in some cases is unfortunate but it’s nice that you can fix it yourself.
+
+Also, C++ gets _two_ shots at this one: many other languages rely on the compiler to optimize these patterns, and this also occurs in C++. It’s just a bit of a quirk of gcc that optimization doesn’t help here: it doesn’t vectorize at -O2, nor does it do _idiom recognition_. Both of those result in much faster code: we’ve seen the effect of idiom recognition already: it results in a `memset`. Even if idiom recognition wasn’t enabled or didn’t work, vectorization would help a lot: here’s [gcc at -O3](https://godbolt.org/z/53c6W5561), but with idiom recognition disabled. It uses 32-byte stores ( `vmovdqu YMMWORD PTR [rax], ymm0`) which will be close to `memset` speed (but a bit of unrolling woudl have helped). In many other languages it would only be up to the compiler: there wouldn’t be a chance to get `memset` even with no optimization as there is in C++.
+
+Do we throw out modern C++ idioms, at least where performance matters, for example by replacing `std::fill` with `memset`? I don’t think so. It is far from clear where `memset` can even be used safely in C++. Unlike say `memcpy` and _trivially copyable_, there is no type trait for “memset is equivalent to zeroing”. It’s probably OK for byte-like types, and is widely used for other primitive types (which we can be sure are trivial, but can’t always be sure of the representation), but even that may not be safe. Once you introduced even simple structures or classes, the footguns multiply. I recommend `std::fill` and more generally sticking to modern idioms, except in very rare cases where profiling has identified a hotspot, and even then you should take the safest approach that still provides the performance you need (e.g., by passing `(char)0` in this case).
+
+### Source
+
+The source for my benchmark is [available on GitHub](https://github.com/travisdowns/fill-bench).
+
+### Thanks
+
+Thanks to [Matt Godbolt](https://twitter.com/mattgodbolt) for creating [Compiler Explorer](https://godbolt.org/), without which this type of investigation would be much more painful – to the point where it often wouldn’t happen at all.
+
+Matt Godbolt, tc, Nathan Kurz and Pocak for finding typos.
+
+### Discuss
+
+I am _still_ working on my comments system (no, I don’t want Disqus), but in the meantime you can discuss this post on [Hacker News](https://news.ycombinator.com/item?id=22104576), [Reddit](https://www.reddit.com/r/cpp/comments/erialk/the_hunt_for_the_fastest_zero/) or [lobste.rs](https://lobste.rs/s/bylri4/hunt_for_fastest_zero).
+
+If you liked this post, check out the [homepage](https://travisdowns.github.io/) for others you might enjoy.
+
+* * *
+
+* * *
+
+1. Of course, you wouldn’t wrap the `std::fill` function in another `fill` function that just forwards directly to the standard function: you’d just call `std::fill` directly. We use a function here so you can see the parameter types and we can examine the disassembly easily. [↩](https://travisdowns.github.io/blog/2020/01/20/zero.html/#fnref:function)
+
+2. On [quickbench](http://quick-bench.com/yGy2Mzlr2ZZhWVxoH7HscmbEC94), the difference varies slightly from run to run but is usually around 31 to 32 times. [↩](https://travisdowns.github.io/blog/2020/01/20/zero.html/#fnref:qb)
+
+3. Interestingly, the comment mentions `wmemset` in addition to `memset` which would presumably be applied for values of type `wchar_t` (32-bits on this platform), but I don’t find any evidence that is actually the case via experiment or by examining the code – the optimization appears to only be currently implemented for byte-like values and `memset`. [↩](https://travisdowns.github.io/blog/2020/01/20/zero.html/#fnref:wmem)

@@ -1,0 +1,70 @@
+---
+title: 'Formal Methods: Just Good Engineering Practice?'
+url: http://brooker.co.za/blog/2024/04/17/formal.html
+published: "2024-04-17T00:00:00Z"
+feed: brooker
+guid: http://brooker.co.za/blog/2024/04/17/formal
+---
+
+# Formal Methods: Just Good Engineering Practice?
+
+Yes. The answer is yes. In your face, Betteridge.
+
+Earlier this week, I did the keynote at [TLA+ conf 2024](https://conf.tlapl.us/2024/) ( [watch the video](https://www.youtube.com/watch?v=HxP4wi4DhA0) or check out [the slides](https://brooker.co.za/blog/resources/tla_conf_2024_slides_mbrooker.pdf)). My message in the keynote was something I have believed to be true for a long time: formal methods are an important part of good software engineering practice. If you’re a software engineer, especially one working on large-scale systems, distributed systems, or critical low-level system, and are not using formal methods as part of your approach, you’re probably wasting time and money.
+
+Because, ultimately, engineering is an exercise in optimizing for time and money[1](#foot1).
+
+> “It would be well if engineering were less generally thought of, and even defined, as the art of constructing. In a certain important sense it is rather the art of not constructing; or, to define it rudely but not inaptly, it is the art of doing that well with one dollar, which any bungler can do with two after a fashion.” [Arthur Wellington](https://en.wikipedia.org/wiki/Arthur_M._Wellington) [2](#foot2)
+
+At first, this may seem counter-intuitive. Formal methods aren’t cheap, aren’t particularly easy, and don’t fit well into every software engineering approach. Its reasonable to start with the belief that a formal approach would increase costs, especially non-recurring engineering costs. My experience is that this isn’t true, for two reasons. The first is rework. Software engineering is somewhat unique in the engineering fields in that design and construction tend to happen at the same time, and a lot of construction can be started without a advancing much into design. This isn’t true in electrical engineering (designing a PCB or laying cables can’t really be done until design is complete), or civil engineering (starting the earthworks before you know what you’re building is possible, but a reliable way to waste money), or mechanical engineering, and so on. This is a huge strength of software - its mutability has been one of the reasons it has taken over the world - but can also significantly increase the cost of design iterations by turning design iterations into implementation iterations. The second is the cost of change. Once an API or system has customers, changing it becomes many times more expensive and difficult. This is fundamentally related to [Hyrum’s Law](https://www.hyrumslaw.com/):
+
+> With a sufficient number of users of an API, it does not matter what you promise in the contract: all observable behaviors of your system will be depended on by somebody.
+
+Isolating the behavior of systems with APIs is an excellent idea. In fact, I would consider it one of the most important ideas in all of software engineering. Hyrum’s Law reminds us of the limitations of the approach: users will end up depending on every conceivable implementation detail of an API. This doesn’t mean change is impossible. I have been involved in many projects in my career that have completely re-implemented the system behind APIs. It merely means that change is expensive, and that abstractions like APIs don’t effectively change that reality.
+
+By saving on the cost of rework, and by getting interface changes out of the way earlier, formal design work can significantly increase the speed and efficiency of the software building process.
+
+_What kinds of systems?_
+
+This doesn’t seem to apply to all kinds of software. Software which is heavily driven by fast-evolving or hard-to-formalize user requirements, from UIs and web sites to implementations of pricing logic, may require so much ongoing rework that the value of up-front design is diluted (or its costs significantly increased). This is the underlying idea behind agile: by running implementation and requirements-gathering in parallel the wall-clock time-to-market can be reduced. More importantly, where requirements gathering is an ongoing process, it allows implementations to be completed even while requirements evolve. In many cases, this parallel approach to development is optimal, and even necessary to make any progress at all.
+
+On the other hand, much of the software behind large-scale, distributed, and low-level systems has well understood requirements. Or, at least, a large enough subset of well understood static requirements that upfront formal design reduces rework and bug density during the implementation phase (and after, when the system is in production) considerably.
+
+Much of the debate about design-up-front vs agile comes from folks on different ends of the software spectrum talking past each other. We shouldn’t be surprised that software with very different models for requirements-gathering would have different optimal engineering approaches. It seems like the closer the requirements process is to _the laws of physics_ the more valuable design, and formal design, are in the engineering process. The closer the requirements are to users’ opinions, the less valuable they are.
+
+This doesn’t mean that there isn’t value in crisply writing down user requirements, and in exploring for formal ways to specify them. Writing down requirements, formally or informally, is extremely valuable. Not writing them down [can waste a lot of time](https://brooker.co.za/blog/2013/05/25/patterns-of-design.html), and cause a lot of friction, because people end up pulling in other directions. It does mean, though, that it’s often hard (and maybe not economical) to formally specify all forms of human requirements. I don’t know a way to specify UI aesthetic requirements, documentation readability, or even API naming consistency, for example.
+
+The other disagreement in this space also seems to come from different ideas about what formal approaches are, and how they’re valuable. I, for example, tend to see much of the _circles and arrows_ school of software design as a waste of time that doesn’t directly engage with the really hard questions. That opinion may stem from ignorance, and is one I hold weakly. But I am sure that my university SE class experience of describing 100 lines of code in 100 reams of UML left me with an unreasonably low opinion of the benefits of designing software. Done badly, or with bad tools, even the most valuable things are useless.
+
+_Which tools?_
+
+Formal methods and automated reasoning are broad fields, with a vast number of tools. Over my career, in my domain in big cloud systems, I have found the follow set useful (but am sure there are tools I would find useful if only I knew them).
+
+- Specification languages like [P](https://github.com/p-org/P), [TLA+](https://lamport.azurewebsites.net/tla/tla.html), and [Alloy](https://alloytools.org/), along with their associated model checkers.
+- Deterministic simulation tools like [turmoil](https://github.com/tokio-rs/turmoil) that allow, along with fuzzing, a principled approach to searching a state space through testing.
+- Verification-aware programming languages like [Dafny](https://dafny.org/) and code verifiers like [Kani](https://github.com/model-checking/kani). I’m not a deep expert in these tools, and have used them a lot less than the others.
+- Numerical simulation techniques. I tend to build my own ( [as I’ve written about before](https://brooker.co.za/blog/2022/04/11/simulation.html)), but there are many frameworks and tools out there.
+- _Whiteboard_ formal-ish methods. These are the methods like drawing [decision tables](https://www.hillelwayne.com/post/decision-table-patterns/), truth tables, explicit state machines, etc on the whiteboard or in design documents.
+
+I like the survey of methods in [Using Lightweight Formal Methods to Validate a Key-Value Storage Node in Amazon S3](https://assets.amazon.science/77/5e/4a7c238f4ce890efdc325df83263/using-lightweight-formal-methods-to-validate-a-key-value-storage-node-in-amazon-s3-2.pdf) too. That’s a great place to start.
+
+But, to the point of this post, we don’t want to get too tied to the idea that verifying an implementation is the only worthy end goal here. That is a worthy goal indeed, but I have found a great deal of value in using tools like TLA+ and P to think through designs more quickly and concretely before building.
+
+_Faster software, faster_
+
+Back in 2015 when we were writing [How Amazon Web Services Uses Formal Methods](https://cacm.acm.org/research/how-amazon-web-services-uses-formal-methods/) for CACM, my focus was very much on correctness. On verifying the safety and liveness properties of my designs, and in getting to a correct design faster. In talking to one of the teams that was using TLA+ on an internal lock management system, I discovered something I loved even more. These words, from Table 1:
+
+> verified an aggressive optimization
+
+This was eye-opening. Not only do tools like TLA+ help us to build systems faster, they help us to build faster systems. They allow us to quickly explore for possible optimizations, find the constraints that really matter, and check whether our proposed optimizations are correct. They, in many cases, remove the hard trade-off between correctness and performance which many systems can get stuck in.
+
+_Conclusion_
+
+Using tools to help us think about the design of systems _at the design stage_ can significantly increase the speed of software development, reduce risk, and allow us to develop more optimal systems from the beginning. For those of us working on large-scale and complex systems, they are simply a part of a good engineering practice.
+
+_In Video Form_
+
+_Footnotes_
+
+1. And other related things, like performance, scalability, sustainability, and efficiency.
+2. I love this quote so much I bought a copy of this Wellington’s 1877 book just to see it on paper.

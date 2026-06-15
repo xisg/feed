@@ -1,0 +1,51 @@
+---
+title: The Zero, One, Infinity Disease
+url: http://brooker.co.za/blog/2015/04/11/zero-one.html
+published: "2015-04-11T00:00:00Z"
+feed: brooker
+guid: http://brooker.co.za/blog/2015/04/11/zero-one
+---
+
+# The Zero, One, Infinity Disease
+
+Numbers are important.
+
+> “The only reasonable numbers are zero, one and infinity.” ( [Bruce MacLennan](http://www.amazon.com/dp/0195113063/))
+
+Rules and heuristics are important. Within our own heads, they are mental shortcuts we use to save ourselves from needing to reason everything out from first principles. Between us, they are devices that we can use to communicate ideas and share complex concepts. Rules of thumb are named patterns of thinking, pointers to complex discussions that can be used in place of talking things through from the beginning every time. They have huge power. Every so often, we should go through our rules and heuristics and throw out the ones that hurt more than they help.
+
+I have a candidate: the [zero-one-infinity rule](http://en.wikipedia.org/wiki/Zero_one_infinity_rule). In spirit, zero-one-infinity is valuable. It counsels against arbitrary limits, and points out that arbitrary limits are a strong hint that system or piece of code was poorly considered.
+
+The value is lost when the word _arbitrary_ is forgotten.
+
+Numerical instincts are a critical part of the engineer’s toolkit. Having the ability to understand the scale and size of a problem, to estimate quickly, and think in terms of upper and lower bounds is exceptionally useful for both science and engineering. This includes the ability to look at a number, or graph, or formula, and quickly decide whether it looks _about right_ or _definitely wrong_. Many of the best engineers and scientists (most famously [Enrico Fermi](http://en.wikipedia.org/wiki/Fermi_problem)) have numerical intuition as a strength, or even as a superpower. When it’s used well, intuition is irreplaceable. It tells us where to measure, where to calculate, and when to calculate or measure a second time. It’s the pure distillation of hard experience into numbers.
+
+Numerical intuition is closely related to another very useful tool: statistical intuition. Statistical intuition is a feeling about how often things happen, what the distribution of things looks like, and how likely it is that the unlikely will turn out to be true. Statistical intuition is often hard won, and can be very easily fooled. Humans, as a species, aren’t very good at intuitively understanding statistical concepts. Still, the best engineers and scientists keep practicing. They can guess the general shape of distributions, and build general effects (like the laws of large and small numbers) into their everyday thinking.
+
+Statistical and numerical intuition are most useful when they work over a large range of scales. Experts make a mental shift from linear to exponential estimation as numbers get to big or too small, from multiplying to adding, and from dividing to subtracting. They discard the mantissa, and use only the exponent.
+
+These intuitive strengths give designers something of a superpower. They become good at finding solutions that don’t make sense at one or zero, and would never work at infinity, but are perfectly suited to their actual range of uses. They recognize where systems are far from their physical limits, which can be an opportunity to push for lower costs or more performance. They can estimate how close bottlenecks are, and where optimization will really matter.
+
+Zero-one-infinity is often taken to counsel against numerical instincts.
+
+Beyond instinct and intuition, absolute numbers are critical to computing. Absolute values, not arbitrary values but real ones, rule the physical world around us. Real limits of storage, bandwidth and latency dominate every field of computing. Real customer requirements, of numbers of entries and request rates, and request patterns, rule over the businesses we build with computers. Computing lives in a world of numbers.
+
+Zero-one-infinity is often taken as counsel against numbers.
+
+This is dangerous in two ways. First, it limits our ambitions of solving real-world problems. The ghost of infinity haunts us. There are very relevant, real problem domains where solving problems like the traveling salesman, program termination or exact cover are very practical. Not even domains where we can accept approximate solutions, but domains where we can compute exact solutions. When we talk about infinity, we run the risk of forgetting that there’s huge value in solving problems at finite scales.
+
+The second problem is more subtle. The success of zero-one-infinity and friends, perhaps exacerbated by our habit of educating all computing people as computer scientists, makes it unfashionable, uncool or unacceptable to talk about real limitations. None of the physical systems we build can scale to infinity on any axis, but it’s hard to shake the feeling that we should be embarrassed about that. Instead of finding and documenting the limits of our systems, we pretend they don’t exist. Perhaps if we don’t talk about physical limits, we can keep pretending we don’t have any.
+
+That’s the core danger of zero-one-infinity. The most important questions about the scaling of systems are “ _what are the limits?_”, “ _how do I know when I’m close to the limits?_”, “ _what happens when I hit the limits?_”. The core question about each number should be “ _where did this number come from?_”, not “ _why not infinity?_”. Of course it can’t be infinity. It’s never going to be infinity. Let’s stop pretending it can be, and have a real conversation about numbers.
+
+\\*\\* Notes: \*\*
+
+1. _apy_ pointed out [SQLite’s limits page](https://www.sqlite.org/limits.html), which makes a similar point.
+
+\\*\\* Historical Context \*\*
+
+Bruce MacLennan, the originator of the rule, was kind enough to get in contact with me about this post. He said:
+
+> Of course, the Zero-One-Infinity Principle was intended as a design principle for programming languages, and similar things, in order to keep them cognitively manageable. I formulated it in the early 70s, when I was working on programming language design and annoyed by all the arbitrary numbers that appeared in some of the languages of the day. I certainly have no argument against estimates, limits, or numbers in general! As you said, the problem is with _arbitrary_ numbers.
+
+> I don’t think I used it in print before I wrote my 1983 PL book. Dick Hamming encouraged me to organize it around principles (a la Kernigan & Plauger and Strunk & White), and the Zero-One-Infinity Principle was one of the first. (FWIW, the name “Zero-One-Infinity Principle” was inspired by George Gamow’s book, “One, Two, Three… Infinity,” which I read in grade school.)

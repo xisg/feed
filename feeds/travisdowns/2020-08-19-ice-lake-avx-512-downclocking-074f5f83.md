@@ -1,0 +1,150 @@
+---
+title: Ice Lake AVX-512 Downclocking
+url: https://travisdowns.github.io/blog/2020/08/19/icl-avx512-freq.html
+published: "2020-08-19T00:00:00Z"
+feed: travisdowns
+guid: https://travisdowns.github.io/blog/2020/08/19/icl-avx512-freq
+---
+
+# Ice Lake AVX-512 Downclocking
+
+This is a short post investigating the behavior of AVX2 and AVX-512 related _license-based downclocking_ on Intel’s newest Ice Lake and Rocket Lake chips.
+
+license-based downclocking[1](https://travisdowns.github.io/blog/2020/08/19/icl-avx512-freq.html/#fn:tiring) refers to the [semi-famous](https://blog.cloudflare.com/on-the-dangers-of-intels-frequency-scaling/) effect where lower than nominal frequency limits are imposed when certain SIMD instructions are executed, especially heavy floating point instructions or 512-bit wide instructions.
+
+More details about this type of downclocking are available at [this StackOverflow answer](https://stackoverflow.com/a/56861355) and we’ve already [covered in somewhat exhaustive detail](https://travisdowns.github.io/blog/2020/01/17/avxfreq1.html) the low level mechanics of these transitions. You can also find [some guidelines](https://lemire.me/blog/2018/09/07/avx-512-when-and-how-to-use-these-new-instructions/) on to how make use of wide SIMD given this issue[2](https://travisdowns.github.io/blog/2020/08/19/icl-avx512-freq.html/#fn:dmore).
+
+All of those were written in the context of Skylake-SP (SKX) which were the first generation of chips to support AVX-512.
+
+So what about Ice Lake, the newest chips which support both the SKX flavor of AVX-512 and also have a [whole host of new AVX-512 instructions](https://branchfree.org/2019/05/29/why-ice-lake-is-important-a-bit-bashers-perspective/)? Will we be stuck gazing longly at these new instructions from afar while never being allowed to actually use them due to downclocking?
+
+Read on to find out, or just skip to the [end](https://travisdowns.github.io/blog/2020/08/19/icl-avx512-freq.html/#summary). The original version of this post included only Ice Lake is the primary focus. On March 28th, 2020 I updated it with a [Rocket Lake section](https://travisdowns.github.io/blog/2020/08/19/icl-avx512-freq.html/#rocket-lake).
+
+## Ice Lake Frequency Behavior
+
+### AVX-Turbo
+
+We will use the [avx-turbo](https://github.com/travisdowns/avx-turbo) utility to measure the core count and instruction mix dependent frequencies for a CPU. This tools works in a straightforward way: run a given mix of instructions on the given number of cores, while measuring the frequency achieved during the test.
+
+For example, the `avx256_fma_t` test – which measures the cost of _heavy_ 256-bit instructions with high ILP – runs the following sequence of FMAs:
+
+```
+	vfmadd132pd ymm0,ymm10,ymm11
+	vfmadd132pd ymm1,ymm10,ymm11
+	vfmadd132pd ymm2,ymm10,ymm11
+	vfmadd132pd ymm3,ymm10,ymm11
+	vfmadd132pd ymm4,ymm10,ymm11
+	vfmadd132pd ymm5,ymm10,ymm11
+	vfmadd132pd ymm6,ymm10,ymm11
+	vfmadd132pd ymm7,ymm10,ymm11
+	vfmadd132pd ymm8,ymm10,ymm11
+	vfmadd132pd ymm9,ymm10,ymm11
+	; repeat 10x for a total of 100 FMAs
+
+```
+
+In total, we’ll use five tests to test every combination of light and heavy 256-bit and 512-bit instructions, as well as scalar instructions (128-bit SIMD behaves the same as scalar), using this command line:
+
+```
+avx-turbo --test=scalar_iadd,avx256_iadd,avx512_iadd,avx256_fma_t,avx512_fma_t
+
+```
+
+### Ice Lake Results
+
+I ran avx-turbo as described above on an Ice Lake i5-1035G4, which is the middle-of-the-range Ice Lake client CPU running at up to 3.7 GHz. The full output is [hidden away in a gist](https://gist.github.com/travisdowns/c53f40fc4dbbd944f5613eaab78f3189#file-icl-turbo-results-txt), but here are the all-important frequency results (all values in GHz):
+
+Instruction MixActive Cores1234Scalar/128-bit3.73.63.33.3Light 256-bit3.73.63.33.3Heavy 256-bit3.73.63.33.3Light 512-bit3.63.63.33.3Heavy 512-bit3.63.63.33.3
+
+As expected, maximum frequency decreases with active core count, but scan down each column to see the effect of instruction category. Along this axis, there is almost no downclocking at all! Only for a single active core count is there any decrease with wider instructions, and it is a paltry only 100 MHz: from 3,700 MHz to 3,600 MHz when any 512-bit instructions are used.
+
+In any other scenario, including any time more than one core is active, or for heavy 256-bit instructions, there is _zero_ license-based downclocking: everything runs as fast as scalar.
+
+#### license Mapping
+
+There another change here too. In SKX, there are three licenses, or categories of instructions with respect to downclocking: L0, L1 and L2. Here, in client ICL, there are only two[3](https://travisdowns.github.io/blog/2020/08/19/icl-avx512-freq.html/#fn:visible) and those don’t line up exactly with the three in SKX.
+
+To be clearer, in SKX the licenses mapped to instruction width and weight as follows:
+
+WidthLightHeavyScalar/128L0L0256L0L1512L1L2
+
+In particular, note that 256-bit heavy instructions have the same license as 512-bit light.
+
+In ICL client, the mapping is:
+
+WidthLightHeavyScalar/128L0L0256L0L0512L1L1
+
+Now, 256 heavy and 512 light are in different categories! In fact, the whole concept of light vs heavy doesn’t seem to apply here: the categorization is purely based on the width[4](https://travisdowns.github.io/blog/2020/08/19/icl-avx512-freq.html/#fn:onefma).
+
+## Rocket Lake
+
+Rocket Lake (shortened as RKL, see [wikipedia](https://en.wikipedia.org/wiki/Rocket_Lake) or [wikichip](https://en.wikichip.org/wiki/intel/microarchitectures/rocket_lake) for more) is more-or-less a backport of the 10nm Sunny Cove microarchitecture to Intel’s highly-tuned workhorse[5](https://travisdowns.github.io/blog/2020/08/19/icl-avx512-freq.html/#fn:some) 14nm process.
+
+Edison Chan has graciously provided the output of running avx-turbo on his Rocket Lake i9-11900K, the top of the line Rocket Lake chip. The [full results](https://travisdowns.github.io/assets/icl-avx512-freq/11900k-avx-freq-results.txt) are available, but I’ve summarized the achieved frequencies in the following table.
+
+**Rocket Lake i9-11900K Frequency Matrix**
+
+Active CoresInstruction MixScalar and 128Light 256Heavy 256Light 512Heavy 5121 Core5.15.15.15.15.12 Cores5.15.15.15.15.13 Cores5.15.15.15.15.14 Cores5.15.15.15.15.15 Cores4.94.94.94.94.96 Cores4.94.94.94.94.97 Cores4.84.84.84.84.88 Cores4.84.84.84.84.8
+
+The results paint a very promising picture of Rocket Lake’s AVX-512 frequency behavior: there is _no_ license-based downclocking evident at any combination of core count and frequency[6](https://travisdowns.github.io/blog/2020/08/19/icl-avx512-freq.html/#fn:rklcaveats). Even heavy AVX-512 instructions can execute at the same frequency as lightweight scalar code.
+
+In fact, the frequency behavior of this chip appears very simple: the full Turbo Boost 2.0 frequency[7](https://travisdowns.github.io/blog/2020/08/19/icl-avx512-freq.html/#fn:tb2) of 5.1 GHz is available for any instruction mix up and up to 4 active cores, then the speed drops to 4.9 for 5 and 6 active cores, and finally to 4.8 GHz for 7 or 8 active cores. This means that at 8 active cores and AVX-512, you are still achieving 94% of the frequency observed for 1 active core running light instructions.
+
+### So What?
+
+Well, so what?
+
+At least, it means we need to adjust our mental model of the frequency related cost of AVX-512 instructions. Rather than the prior-generation verdict of “AVX-512 generally causes significant downclocking”, on these Ice Lake and Rocket Lake client chips we can say that AVX-512 causes insignificant (usually, none at all) license-based downclocking and I expect this to be true on other ICL and RKL client chips as well.
+
+Now, this adjustment of expectations comes with an important caveat: license-based downclocking is only _one_ source of downclocking. It is also possible to hit power, thermal or current limits. Some configurations may only be able to run wide SIMD instructions on all cores for a short period of time before exceeding running power limits. In my case, the $250 laptop I’m testing this on has extremely poor cooling and rather than power limits I hit thermal limits (100°C limit) within a few seconds running anything heavy on all cores.
+
+However, these other limits are qualitatively different than license based limits. They apply mostly[8](https://travisdowns.github.io/blog/2020/08/19/icl-avx512-freq.html/#fn:voltage) in a _pay for what you use_ way: if you use a wide or heavy instruction or two you incur only a microscopic amount of additional power or heat cost associated with only those instructions. This is unlike some license-based transitions where a core or chip-wide transition occurs that affects unrelated subsequent execution for a significant period of time.
+
+Since wider operations are generally _cheaper_ in power than an equivalent number of narrower operations[9](https://travisdowns.github.io/blog/2020/08/19/icl-avx512-freq.html/#fn:widenarrow), you can determine up-front that a wide operation is _worth it_ – at least for cases that scale well with width. In any case, the problem is most local: not depending on the behavior of the surrounding code.
+
+### Summary
+
+Here’s what we’ve learned.
+
+- The Ice Lake i5-1035 CPU exhibits only 100 MHz of license-based downclock with 1 active core when running 512-bit instructions, and _no_ license downclock in any other scenario.
+- The Rocket Lake i9-11900K CPU doesn’t exhibit any license-based downclock in the tested scenarios.
+- The Ice Lake CPU has an all-core 512-bit turbo frequency of 3.3 GHz is 89% of the maximum single-core scalar frequency of 3.7 GHz, so within power and thermal limits this chip has a very “flat” frequency profile. The Rocket Lake 11900K is even flatter with an all-eight-cores frequency of 4.8 GHz clocking in at 94% of the 5.1 GHz single-core speed.
+- Unlike SKX, this Ice Lake chip does not distinguish between “light” and “heavy” instructions for frequency scaling purposes: FMA operations behave the same as lighter operations.
+
+So on ICL and RKL client, you don’t have to fear the downclock. Only time will tell if this applies also to the Ice Lake Xeon server chips.
+
+### Thanks
+
+Thanks to Edison Chan for the Rocket Lake i9-11900K results.
+
+Stopwatch photo by [Kevin Andre](https://unsplash.com/@kevinandrephotography) on [Unsplash](https://unsplash.com/s/photos/stopwatch).
+
+### Discussion and Feedback
+
+This post was discussed [on Hacker News](https://news.ycombinator.com/item?id=24215022).
+
+If you have a question or any type of feedback, you can leave a [comment below](https://travisdowns.github.io/blog/2020/08/19/icl-avx512-freq.html/#comment-section). I’m also interested in results on _other_ new Intel or AMD chips, like the i3 and i7 variants: let me know if you have one of those and we can collect results.
+
+If you liked this post, check out the [homepage](https://travisdowns.github.io/) for others you might enjoy.
+
+* * *
+
+* * *
+
+1. It gets tiring to constantly repeat _license-based downclock_ so I’ll often use simply “downclock” instead, but this should still be understood to refer to the license-based variety rather than other types of frequency throttling. [↩](https://travisdowns.github.io/blog/2020/08/19/icl-avx512-freq.html/#fnref:tiring)
+
+2. Note that Daniel has [written](https://lemire.me/blog/2018/08/25/avx-512-throttling-heavy-instructions-are-maybe-not-so-dangerous/) [much more](https://lemire.me/blog/2018/08/15/the-dangers-of-avx-512-throttling-a-3-impact/) [than](https://lemire.me/blog/2018/08/24/trying-harder-to-make-avx-512-look-bad-my-quantified-and-reproducible-results/) [just that](https://lemire.me/blog/2018/09/04/per-core-frequency-scaling-and-avx-512-an-experiment/) one. [↩](https://travisdowns.github.io/blog/2020/08/19/icl-avx512-freq.html/#fnref:dmore)
+
+3. Only two _visible:_ it is possible that the three (or more) categories still exist, but they cause voltage transitions only, not any frequency transitions. [↩](https://travisdowns.github.io/blog/2020/08/19/icl-avx512-freq.html/#fnref:visible)
+
+4. One might imagine this is a consequence of ICL client having only one FMA unit on all SKUs: very heavy FP 512-bit operations aren’t possible. However, this doesn’t align with 256-bit heavy still being fast: you can still do 2x256-bit FMAs per cycle and this is the same FP intensity as 1x512-bit FMA per cycle. It’s more like, on this chip, FP operation don’t need more license based protection from other operations of the same width, and the main cost is 512-bit width. [↩](https://travisdowns.github.io/blog/2020/08/19/icl-avx512-freq.html/#fnref:onefma)
+
+5. Those of a more critical bent might prefer _long suffering_ or _very long in the tooth_ as adjectives for this process. [↩](https://travisdowns.github.io/blog/2020/08/19/icl-avx512-freq.html/#fnref:some)
+
+6. _Some_ tests did show lower speeds, although these outlier results didn’t correlate well with heavy or light instructions, and the difference was generally 100 MHz or less. These likely represent _other_ sources of reduced frequency, such as thermal throttling or switching to a higher active core count when a process not related to the test process has active threads. In any case, for _each_ core count, we can find a test in each of the instruction categories that runs at full speed, allowing me to fill out the matrix even in the presence of these outliers. [↩](https://travisdowns.github.io/blog/2020/08/19/icl-avx512-freq.html/#fnref:rklcaveats)
+
+7. I mention Turbo Boost 2.0 specifically because [this chip](https://ark.intel.com/content/www/us/en/ark/products/212325/intel-core-i9-11900k-processor-16m-cache-up-to-5-30-ghz.html) also has a higher Turbo Boost 3.0 maximum frequency of 5.2 GHz, and beyond that a high _Thermal Velocity Boost_ frequency of 5.3 GHz. These higher frequencies apply only to specific _chosen cores_ within the CPU selected at manufacturing based on their ability to reach these higher frequencies. We don’t see any of these higher speeds during the test, possibly because the cores the test pins itself to are not the _chosen cores_ on this CPU. So the frequency behavior of this chip can be characterized as “very simple” only if you ignore these additional turbo levels and other complicating factors. [↩](https://travisdowns.github.io/blog/2020/08/19/icl-avx512-freq.html/#fnref:tb2)
+
+8. I have to weasel-word with _mostly_ here because even if there is no frequency transition, there may be a voltage transition which both incurs a halted period where nothing executes, and increases power for subsequent execution that may not require the elevated voltage. Also, there is the not-yet-discussed concept of _implicit widening_ which may extend later narrow operations to maximum width if the upper parts of the registers are not zeroed with `vzeroupper` or `vzeroall`. [↩](https://travisdowns.github.io/blog/2020/08/19/icl-avx512-freq.html/#fnref:voltage)
+
+9. For example, one 512-bit integer addition would generally be cheaper in energy use than the two 256-bit operations required to calculate the same result, because of execution overheads that don’t scale linearly with width (that’s almost everything outside of execution itself). [↩](https://travisdowns.github.io/blog/2020/08/19/icl-avx512-freq.html/#fnref:widenarrow)
