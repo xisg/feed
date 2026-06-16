@@ -1,5 +1,5 @@
 ---
-title: 'Анатомия SAP Privileges: как устроено управление правами в macOS'
+title: 'Анатомия SAP Privileges: как устроено управление правами в macOS'
 url: https://habr.com/ru/companies/yandex/articles/1023708/?utm_source=habrahabr&utm_medium=rss&utm_campaign=corporate_blog
 published: "2026-04-16T07:02:29Z"
 feed: yandex

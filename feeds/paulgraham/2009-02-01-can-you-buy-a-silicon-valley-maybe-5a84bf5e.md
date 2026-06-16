@@ -1,5 +1,5 @@
 ---
-title: Can You Buy a Silicon Valley?  Maybe.
+title: Can You Buy a Silicon Valley? Maybe.
 url: http://www.paulgraham.com/maybe.html
 published: "2009-02-01T00:00:00Z"
 feed: paulgraham

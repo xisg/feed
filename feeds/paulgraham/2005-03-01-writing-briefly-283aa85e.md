@@ -1,5 +1,5 @@
 ---
-title: Writing,  Briefly
+title: Writing, Briefly
 url: http://www.paulgraham.com/writing44.html
 published: "2005-03-01T00:00:00Z"
 feed: paulgraham

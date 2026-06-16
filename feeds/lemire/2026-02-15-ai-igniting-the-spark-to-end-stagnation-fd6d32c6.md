@@ -1,5 +1,5 @@
 ---
-title: 'AI: Igniting the Spark to End  Stagnation'
+title: 'AI: Igniting the Spark to End Stagnation'
 url: https://lemire.me/blog/2026/02/15/ai-igniting-the-spark-to-end-stagnation/
 published: "2026-02-15T15:19:31Z"
 feed: lemire

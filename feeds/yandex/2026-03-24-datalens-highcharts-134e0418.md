@@ -1,5 +1,5 @@
 ---
-title: 'Заменить нельзя оставить: как DataLens мигрировал с Highcharts'
+title: 'Заменить нельзя оставить: как DataLens мигрировал с Highcharts'
 url: https://habr.com/ru/companies/yandex/articles/1013626/?utm_source=habrahabr&utm_medium=rss&utm_campaign=corporate_blog
 published: "2026-03-24T08:00:39Z"
 feed: yandex

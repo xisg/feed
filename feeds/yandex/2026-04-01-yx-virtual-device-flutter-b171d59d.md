@@ -1,5 +1,5 @@
 ---
-title: 'Пакет yx_virtual_device: опенсорс‑инструмент для упрощения тестирования Flutter‑приложений'
+title: 'Пакет yx_virtual_device: опенсорс‑инструмент для упрощения тестирования Flutter‑приложений'
 url: https://habr.com/ru/companies/yandex/articles/1016888/?utm_source=habrahabr&utm_medium=rss&utm_campaign=corporate_blog
 published: "2026-04-01T09:00:04Z"
 feed: yandex

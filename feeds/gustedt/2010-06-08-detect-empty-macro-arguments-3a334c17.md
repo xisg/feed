@@ -1,5 +1,5 @@
 ---
-title: Detect empty macro arguments
+title: Detect empty macro arguments
 url: https://gustedt.wordpress.com/2010/06/08/detect-empty-macro-arguments/
 published: "2010-06-08T11:58:39Z"
 feed: gustedt

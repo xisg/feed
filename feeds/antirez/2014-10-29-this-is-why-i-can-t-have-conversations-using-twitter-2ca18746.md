@@ -1,5 +1,5 @@
 ---
-title: This is why I  can’t have conversations using Twitter
+title: This is why I can’t have conversations using Twitter
 url: http://antirez.com/news/82
 published: "2014-10-29T09:17:04Z"
 feed: antirez

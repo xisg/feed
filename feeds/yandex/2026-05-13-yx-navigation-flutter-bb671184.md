@@ -1,5 +1,5 @@
 ---
-title: Опенсорсим yx_navigation — декларативную навигацию для Flutter
+title: Опенсорсим yx_navigation — декларативную навигацию для Flutter
 url: https://habr.com/ru/companies/yandex/articles/1032600/?utm_source=habrahabr&utm_medium=rss&utm_campaign=corporate_blog
 published: "2026-05-13T07:00:59Z"
 feed: yandex

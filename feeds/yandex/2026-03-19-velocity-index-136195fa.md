@@ -1,5 +1,5 @@
 ---
-title: 'Ускорение Яндекс Трекера: в погоне за Velocity Index'
+title: 'Ускорение Яндекс Трекера: в погоне за Velocity Index'
 url: https://habr.com/ru/companies/yandex/articles/1010280/?utm_source=habrahabr&utm_medium=rss&utm_campaign=corporate_blog
 published: "2026-03-19T07:00:06Z"
 feed: yandex

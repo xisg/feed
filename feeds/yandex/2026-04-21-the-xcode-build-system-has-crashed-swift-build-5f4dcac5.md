@@ -1,5 +1,5 @@
 ---
-title: The Xcode build system has crashed, или Почему рекурсия — это плохо. Используем swift‑build со своими патчами
+title: The Xcode build system has crashed, или Почему рекурсия — это плохо. Используем swift‑build со своими патчами
 url: https://habr.com/ru/companies/yandex/articles/1024298/?utm_source=habrahabr&utm_medium=rss&utm_campaign=corporate_blog
 published: "2026-04-21T07:07:13Z"
 feed: yandex

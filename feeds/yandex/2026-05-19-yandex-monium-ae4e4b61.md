@@ -1,5 +1,5 @@
 ---
-title: 'Когда метрики сходят с ума: автоматическая детекция аномалий во временных рядах в Yandex Monium'
+title: 'Когда метрики сходят с ума: автоматическая детекция аномалий во временных рядах в Yandex Monium'
 url: https://habr.com/ru/companies/yandex/articles/1035520/?utm_source=habrahabr&utm_medium=rss&utm_campaign=corporate_blog
 published: "2026-05-19T07:02:57Z"
 feed: yandex

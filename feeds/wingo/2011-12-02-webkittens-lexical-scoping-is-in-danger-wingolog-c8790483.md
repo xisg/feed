@@ -1,5 +1,5 @@
 ---
-title: webkittens!  lexical scoping is in danger! — wingolog
+title: webkittens! lexical scoping is in danger! — wingolog
 url: https://wingolog.org/archives/2011/12/02/webkittens-lexical-scoping-is-in-danger
 published: "2011-12-02T00:00:00Z"
 feed: wingo

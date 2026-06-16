@@ -1,5 +1,5 @@
 ---
-title: 'От баз данных до инструментов для ИИ‑экосистем: проекты, которые получили гранты Yandex Open Source'
+title: 'От баз данных до инструментов для ИИ‑экосистем: проекты, которые получили гранты Yandex Open Source'
 url: https://habr.com/ru/companies/yandex/articles/1040282/?utm_source=habrahabr&utm_medium=rss&utm_campaign=corporate_blog
 published: "2026-05-28T09:01:26Z"
 feed: yandex

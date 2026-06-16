@@ -1,5 +1,5 @@
 ---
-title: 'От линейного текста к семантическому графу: строим knowledge‑extraction‑пайплайн для учёбы'
+title: "От линейного текста к семантическому графу: строим knowledge‑extraction‑пайплайн для учёбы"
 url: https://habr.com/ru/companies/yandex/articles/1019928/?utm_source=habrahabr&utm_medium=rss&utm_campaign=corporate_blog
 published: "2026-04-09T07:01:46Z"
 feed: yandex

@@ -1,7 +1,5 @@
 ---
-title: |-
-    Unless Explicitly Specified Otherwise, Open Source Software With Users
-          Carries Moral Obligations
+title: Unless Explicitly Specified Otherwise, Open Source Software With Users Carries Moral Obligations
 url: https://matklad.github.io/2023/10/18/obligations.html
 published: "2023-10-18T00:00:00Z"
 feed: matklad

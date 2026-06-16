@@ -1,5 +1,5 @@
 ---
-title: Избегаем парадокса пестицида, или Как мы внедрили систему рекомендаций «забытых» тест‑кейсов
+title: Избегаем парадокса пестицида, или Как мы внедрили систему рекомендаций «забытых» тест‑кейсов
 url: https://habr.com/ru/companies/yandex/articles/1040612/?utm_source=habrahabr&utm_medium=rss&utm_campaign=corporate_blog
 published: "2026-06-03T07:00:51Z"
 feed: yandex

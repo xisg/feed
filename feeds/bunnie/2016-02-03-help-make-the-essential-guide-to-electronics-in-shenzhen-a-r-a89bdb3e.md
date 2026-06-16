@@ -1,5 +1,5 @@
 ---
-title: "Help Make â€œThe Essential Guide to Electronics in Shenzhenâ€\x9D a Reality"
+title: Help Make â€œThe Essential Guide to Electronics in Shenzhenâ€ a Reality
 url: https://www.bunniestudios.com/blog/2016/help-make-the-essential-guide-to-electronics-in-shenzhen-a-reality/
 published: "2016-02-03T16:13:43Z"
 feed: bunnie

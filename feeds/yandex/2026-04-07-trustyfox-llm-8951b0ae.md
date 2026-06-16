@@ -1,5 +1,5 @@
 ---
-title: 'TrustYFox: путь от пет‑проекта до LLM‑инструмента для поиска уязвимостей'
+title: 'TrustYFox: путь от пет‑проекта до LLM‑инструмента для поиска уязвимостей'
 url: https://habr.com/ru/companies/yandex/articles/1013714/?utm_source=habrahabr&utm_medium=rss&utm_campaign=corporate_blog
 published: "2026-04-07T07:00:46Z"
 feed: yandex

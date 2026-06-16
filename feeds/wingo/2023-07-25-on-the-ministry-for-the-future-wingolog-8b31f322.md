@@ -1,5 +1,5 @@
 ---
-title: on « the ministry for the future » — wingolog
+title: on « the ministry for the future » — wingolog
 url: https://wingolog.org/archives/2023/07/25/on-the-ministry-for-the-future
 published: "2023-07-25T00:00:00Z"
 feed: wingo

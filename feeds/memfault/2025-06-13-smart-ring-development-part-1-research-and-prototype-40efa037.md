@@ -1,5 +1,5 @@
 ---
-title: Smart Ring Development  (Part 1) － Research and Prototype
+title: Smart Ring Development (Part 1) － Research and Prototype
 url: https://interrupt.memfault.com/blog/smart-ring-development-part-1
 published: "2025-06-13T00:00:00Z"
 feed: memfault
