@@ -187,6 +187,22 @@ name = "gilkalai"
 url  = "https://terrytao.wordpress.com/feed/"
 name = "terrytao"
 
+# Personal blogs of Anthropic employees.
+# Tristan Hume — performance/inference; systems & perf.
+[[feeds]]
+url  = "https://thume.ca/atom.xml"
+name = "thume"
+
+# Nelson Elhage ("Made of Bugs") — interpretability/infra; systems & debugging.
+[[feeds]]
+url  = "https://blog.nelhage.com/atom.xml"
+name = "nelhage"
+
+# Chris Olah — Anthropic co-founder; ML interpretability essays.
+[[feeds]]
+url  = "https://colah.github.io/rss.xml"
+name = "colah"
+
 # Sort order for `hrb list` / `hrb feed`. "desc" = newest first.
 ordering = "desc"
 
