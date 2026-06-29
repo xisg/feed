@@ -203,6 +203,36 @@ name = "nelhage"
 url  = "https://colah.github.io/rss.xml"
 name = "colah"
 
+# Lilian Weng ("Lil'Log") — OpenAI; rigorous ML deep-dives.
+[[feeds]]
+url  = "https://lilianweng.github.io/index.xml"
+name = "lilianweng"
+
+# Andrej Karpathy — OpenAI co-founder; ML.
+[[feeds]]
+url  = "https://karpathy.github.io/feed.xml"
+name = "karpathy"
+
+# Simon Willison — practical LLM tooling, Python, systems.
+[[feeds]]
+url  = "https://simonwillison.net/atom/everything/"
+name = "simonwillison"
+
+# Sam Altman — OpenAI CEO; essays on AI, startups, the future.
+[[feeds]]
+url  = "https://blog.samaltman.com/posts.atom"
+name = "samaltman"
+
+# Sebastian Raschka — LLMs from scratch, ML engineering.
+[[feeds]]
+url  = "https://magazine.sebastianraschka.com/feed"
+name = "raschka"
+
+# Chip Huyen — ML systems & engineering.
+[[feeds]]
+url  = "https://huyenchip.com/feed.xml"
+name = "huyenchip"
+
 # Sort order for `hrb list` / `hrb feed`. "desc" = newest first.
 ordering = "desc"
 

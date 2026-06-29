@@ -1,0 +1,11 @@
+---
+title: Domain Randomization for Sim2Real Transfer
+url: https://lilianweng.github.io/posts/2019-05-05-domain-randomization/
+published: "2019-05-05T00:00:00Z"
+feed: lilianweng
+guid: https://lilianweng.github.io/posts/2019-05-05-domain-randomization/
+---
+
+# Domain Randomization for Sim2Real Transfer
+
+In Robotics, one of the hardest problems is how to make your model transfer to the real world. Due to the sample inefficiency of deep RL algorithms and the cost of data collection on real robots, we often need to train models in a simulator which theoretically provides an infinite amount of data. However, the reality gap between the simulator and the physical world often leads to failure when working with physical robots. The gap is triggered by an inconsistency between physical parameters (i.e. friction, kp, damping, mass, density) and, more fatally, the incorrect physical modeling (i.e. collision between soft surfaces).
